@@ -1,0 +1,81 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu May 18 11:34:39 PDT 2017
+  Author:  oracle
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="MySOAInvokingRestBpel"
+               targetNamespace="http://xmlns.oracle.com/SOA_TO_REST/SOA_Rest_Invocation/MySOAInvokingRestBpel"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/SOA_TO_REST/SOA_Rest_Invocation/MySOAInvokingRestBpel"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://xmlns.oracle.com/SOA-TO-REST/SOA-Rest-Invocation/MyRestReference">
+
+    <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/SOA_TO_REST/SOA_Rest_Invocation/MySOAInvokingRestBpel" location="../WSDLs/MySOAInvokingRestBpel.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="mysoainvokingrestbpel_client" partnerLinkType="client:MySOAInvokingRestBpel" myRole="MySOAInvokingRestBpelProvider"/>
+    <partnerLink name="MyRestReference" partnerLinkType="ns1:MyRestReference" partnerRole="MyRestReferenceProvider"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:MySOAInvokingRestBpelRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:MySOAInvokingRestBpelResponseMessage"/>
+    <variable name="restInput" messageType="ns1:PostMyEndpoint_inputMessage"/>
+    <variable name="restOutput" messageType="ns1:Rest_EmptyMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in MySOAInvokingRestBpel.wsdl) -->
+    <receive name="receiveInput" partnerLink="mysoainvokingrestbpel_client" portType="client:MySOAInvokingRestBpel" operation="process" variable="inputVariable" createInstance="yes"/>
+    <assign name="transformSOA-to-NXSD-for-AUTO-JSON-translation">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/SOA-TO-REST.xsl", $inputVariable.payload)</from>
+        <to variable="restInput" part="request"/>
+      </copy>
+    </assign>
+    <invoke name="takeSomeRest" partnerLink="MyRestReference"
+            portType="ns1:MyRestReference_ptt" operation="PostMyEndpoint" inputVariable="restInput"
+            outputVariable="restOutput" bpelx:invokeAsDetail="no"/>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="mysoainvokingrestbpel_client" portType="client:MySOAInvokingRestBpel" operation="process" variable="outputVariable"/>
+  </sequence>
+</process>

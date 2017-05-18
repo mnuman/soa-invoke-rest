@@ -1,0 +1,27 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<application xmlns:soa="http://www.oracle.com/soa/rest" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tns="http://xmlns.oracle.com/SOA-TO-REST/SOA-Rest-Invocation/MyRestReference" xmlns:ns0="http://fietsenboertje.com/lekke-band" xmlns="http://wadl.dev.java.net/2009/02">
+   <doc title="MyRestReference">RestReference</doc>
+   <grammars>
+      <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+            <xsd:import namespace="http://fietsenboertje.com/lekke-band" schemaLocation="../Schemas/MyRestRequest.nxsd"/>
+        </xsd:schema>
+      <schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://xmlns.oracle.com/SOA-TO-REST/SOA-Rest-Invocation/MyRestReference" elementFormDefault="qualified">
+            <element name="empty">
+                <complexType/>
+            </element>
+        </schema>
+   </grammars>
+   <resources>
+      <resource path="/my-endpoint">
+         <method name="POST" soa:wsdlOperation="PostMyEndpoint">
+            <request>
+               <param name="roelieBoelie" style="query" soa:expression="'Aap-Noot-Mies'" default="" type="xsd:string"/>
+               <param name="myEcid" style="query" soa:expression="$property.tracking.ecid" default="" type="xsd:string"/>
+               <representation mediaType="application/json" element="cns:WieGaatJeHelpen" xmlns:cns="http://fietsenboertje.com/lekke-band"/>
+               <representation mediaType="application/x-www-form-urlencoded" element="cns:WieGaatJeHelpen" xmlns:cns="http://fietsenboertje.com/lekke-band"/>
+            </request>
+            <response status="204"/>
+         </method>
+      </resource>
+   </resources>
+</application>
